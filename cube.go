@@ -3,7 +3,7 @@ package cube_executor
 import (
 	"github.com/akaumov/nats-pool"
 	cube_template "github.com/akaumov/cube"
-	handler "github.com/akaumov/echo-cube"
+	handler "cube_executor/test_cube"
 	"os"
 	"os/signal"
 	"syscall"
@@ -87,37 +87,6 @@ func (c *Cube) startListenMessagesFromBus(stopChannel chan os.Signal) {
 
 	<-stopChannel
 }
-
-//func (c *Cube) handleSystemMessage(msg *nats.Msg) {
-//	var command js.Command
-//
-//	err := json.Unmarshal(msg.Data, &command)
-//	if err != nil {
-//		return
-//	}
-//
-//	switch command.Method {
-//	case "ping":
-//
-//	}
-//}
-
-//func (c *Cube) startListenSystemMessages() {
-//	busClient, err := c.pool.Get()
-//	if err != nil {
-//		log.Fatalf("Can't connect to nats: %v", err)
-//		return
-//	}
-//
-//	_, err = busClient.Subscribe('SYS', func(msg *nats.Msg) {
-//
-//	})
-//
-//	if err != nil {
-//		log.Fatalf("Can't connect to nats: %v", err)
-//		return
-//	}
-//}
 
 func (c *Cube) Start() {
 
