@@ -3,6 +3,7 @@ package cube_executor
 import (
 	"github.com/akaumov/nats-pool"
 	cube_template "github.com/akaumov/cube"
+	handler "github.com/akaumov/echo-cube"
 	"os"
 	"os/signal"
 	"syscall"
@@ -28,6 +29,7 @@ func NewCube(id string, inputChannelsMap map[string]string, outputChannelsMap ma
 		inputChannelsMap:  inputChannelsMap,
 		outputChannelsMap: outputChannelsMap,
 		params:            params,
+		handler:           &handler.Handler{},
 	}
 }
 
@@ -135,7 +137,6 @@ func (c *Cube) Start() {
 		c.Stop()
 	}()
 
-	log.Print("START LISTEn")
 	c.startListenMessagesFromBus(getOsSignalWatcher())
 }
 

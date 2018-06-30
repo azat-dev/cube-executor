@@ -9,7 +9,7 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/akaumov/echo_cube"
+  name = "github.com/akaumov/echo-cube"
   packages = ["."]
   revision = "31b38999da5fe4f869f1afc99126c666d43247cd"
 
@@ -34,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "50bc032ce350289264a097f21d1f14cdc70712bc205329c55050e43e51bb3961"
+  inputs-digest = "9d306ecfc79ea3f411fb02291ef4e4dc3ccfdb4f2a73cf8ca7af05e6099bf8b0"
   solver-name = "gps-cdcl"
   solver-version = 1
