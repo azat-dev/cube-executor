@@ -25,7 +25,7 @@ type Cube struct {
 
 func NewCube(id string, inputChannelsMap map[string]string, outputChannelsMap map[string]string, params map[string]string) *Cube {
 	return &Cube{
-		busAddress:        "nats://localhost:4444",
+		busAddress:        "nats://cubes_bus:4444",
 		inputChannelsMap:  inputChannelsMap,
 		outputChannelsMap: outputChannelsMap,
 		params:            params,
