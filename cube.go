@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	cube_template "github.com/akaumov/cube"
 	"github.com/akaumov/nats-pool"
-	"github.com/nats-io/go-nats"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/nats-io/go-nats"
 )
 
 type Cube struct {
