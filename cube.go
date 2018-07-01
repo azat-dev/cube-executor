@@ -1,16 +1,16 @@
 package cube_executor
 
 import (
-	"github.com/akaumov/nats-pool"
-	cube_template "github.com/akaumov/cube"
 	handler "cube_executor/test_cube"
+	"encoding/json"
+	cube_template "github.com/akaumov/cube"
+	"github.com/akaumov/nats-pool"
+	"github.com/nats-io/go-nats"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"log"
-	"github.com/nats-io/go-nats"
 	"time"
-	"encoding/json"
 )
 
 type Cube struct {

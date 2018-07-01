@@ -2,7 +2,7 @@ package main
 
 import "cube_executor"
 
-func main()  {
+func main() {
 	//pool, err := nats_pool.New("nats://bus:4222", 10)
 	//if err != nil {
 	//	// handle error

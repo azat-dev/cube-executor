@@ -6,7 +6,6 @@ import (
 )
 
 type Handler struct {
-
 }
 
 func (h *Handler) OnStart(cube cube.Cube) {
@@ -20,6 +19,5 @@ func (h *Handler) OnStop(cube cube.Cube) {
 func (h *Handler) OnReceiveMessage(cube cube.Cube, message cube.Message) {
 	log.Println("OnStart", message)
 }
-
 
 var _ cube.HandlerInterface = (*Handler)(nil)
