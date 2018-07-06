@@ -18,9 +18,9 @@ type Message struct {
 }
 
 type Error struct {
-	Code        string           `json:"name"`
+	Code        string           `json:"code"`
 	Name        string           `json:"name"`
-	Description string           `json:"name"`
+	Description string           `json:"description"`
 	Data        *json.RawMessage `json:"data"`
 }
 
