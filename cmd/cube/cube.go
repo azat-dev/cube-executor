@@ -1,26 +1,16 @@
 package main
 
-import "cube_executor"
+import (
+	"cube_executor"
+	"flag"
+	"log"
+)
 
 func main() {
-	//pool, err := nats_pool.New("nats://bus:4222", 10)
-	//if err != nil {
-	//	// handle error
-	//}
-	//
-	//natsClient, err := pool.Get()
-	//if err != nil {
-	//	log.Fatalf("can't  connect to bus:\n%v", err)
-	//	return
-	//}
-	//
-	//timeout := time.Duration(100) * time.Millisecond
-	//const message = `
-	//	"method": "getServiceParams",
-	//	"params": {
-	//
-	//`
-	//natsClient.Request("_SYSTEM", []byte("{}"), timeout)
+	var configPath = flag.String("config", "/home/app/config.json", "config path")
+
+	flag.Parse()
+	log.SetFlags(0)
 
 	var mapChannels map[string]string
 	cube := cube_executor.NewCube("1", mapChannels, mapChannels, mapChannels)

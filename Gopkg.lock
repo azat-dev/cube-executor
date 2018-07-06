@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/akaumov/cube"
   packages = ["."]
-  revision = "4bc08c5d138d8456bd52abb242b251d6da117c89"
+  revision = "741f4db16631bc604f6a790b46c910a37c4a110f"
 
 [[projects]]
   branch = "master"
@@ -25,9 +25,15 @@
   revision = "289cccf02c178dc782430d534e3c1f5b72af807f"
   version = "v1.0.0"
 
+[[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d23fe664ae8e52c67b20501682700f1bcce87427c1dc6db7d2b83c49f13b8bbf"
+  inputs-digest = "48a92700537ab0485277918bd27b0611868587d578da9bb0ae1e0a06262b2a0c"
   solver-name = "gps-cdcl"
   solver-version = 1

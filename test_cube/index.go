@@ -1,23 +1,32 @@
 package test_cube
 
 import (
-	"github.com/akaumov/cube"
-	"log"
+	cube_interface "github.com/akaumov/cube"
 )
 
 type Handler struct {
 }
 
-func (h *Handler) OnStart(cube cube.Cube) {
-	log.Println("OnStart")
+func (h *Handler) OnStart(instance cube_interface.Cube) {
+	instance.LogInfo("OnStart")
 }
 
-func (h *Handler) OnStop(cube cube.Cube) {
-	log.Println("OnStop")
+func (h *Handler) OnStop(instance cube_interface.Cube) {
+	instance.LogInfo("OnStop")
 }
 
-func (h *Handler) OnReceiveMessage(cube cube.Cube, message cube.Message) {
-	log.Println("OnStart", message)
+func (h *Handler) OnReceiveMessage(instance cube_interface.Cube, channel string, message cube_interface.Message) {
+	instance.LogInfo("OnReceiveMessage")
 }
 
-var _ cube.HandlerInterface = (*Handler)(nil)
+func (h *Handler) OnReceiveRequest(instance cube_interface.Cube, channel string, request cube_interface.Request) (*cube_interface.Response, error) {
+	instance.LogInfo("OnReceiveRequest")
+
+	return &cube_interface.Response{
+		Version: "1",
+		Errors:  nil,
+		Result:  nil,
+	}, nil
+}
+
+var _ cube_interface.HandlerInterface = (*Handler)(nil)
