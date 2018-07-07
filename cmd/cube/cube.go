@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-	var configPath = flag.String("config", "/home/app/config.json", "config path")
 
 	flag.Parse()
 	log.SetFlags(0)
