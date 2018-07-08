@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	cube_interface "github.com/akaumov/cube"
-	handler "github.com/akaumov/cube-stub"
+	handler "github.com/akaumov/cube-http-gateway"
 	"github.com/akaumov/nats-pool"
 	"github.com/nats-io/go-nats"
 	"github.com/satori/go.uuid"
@@ -66,8 +66,8 @@ type Cube struct {
 	handler             cube_interface.HandlerInterface
 }
 
-func NewCube() (*Cube, error) {
-	configRaw, err := ioutil.ReadFile("/config.json")
+func NewCube(configPath string) (*Cube, error) {
+	configRaw, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("can't read config file: %v/n", err)
 	}
@@ -281,12 +281,14 @@ func (c *Cube) startListenMessagesFromBus(inputChannel BusChannel, stopChannel c
 
 func (c *Cube) Start() {
 
+	fmt.Println("Start")
 	//TODO: check stopping
 	stopSignal := getOsSignalWatcher()
 
 	pool, err := nats_pool.New(c.busAddress, 10)
 	if err != nil {
-		log.Panicf("can't connect to nats: %v", err)
+		fmt.Println("can't connect to nats: %v", err)
+		return
 	}
 
 	c.pool = pool
@@ -299,10 +301,10 @@ func (c *Cube) Start() {
 		go c.startListenMessagesFromBus(busChannel, getOsSignalWatcher())
 	}
 
-	func() {
-		<-stopSignal
-		c.Stop()
-	}()
+	c.handler.OnStart(c)
+	fmt.Println("Instance started")
+	<-stopSignal
+	c.Stop()
 }
 
 func (c *Cube) Stop() {

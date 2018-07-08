@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/SermoDigital/jose"
+  packages = [".","crypto","jws","jwt"]
+  revision = "f6df55f235c24f236d11dbcf665249a59ac2021f"
+  version = "1.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/akaumov/cube"
   packages = ["."]
@@ -10,6 +16,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ac53aae152b8d05eb1d7d5014d99e83e474ca843b3b4f6363e74f24342147609"
+  inputs-digest = "e68ebae2db2f572891281bc49a461fed23f6ddf1de65fc00a51d45de0378eb13"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -7,11 +7,12 @@ import (
 )
 
 func main() {
+	var configPath = flag.String("config", "/config.json", "config path")
 
 	flag.Parse()
 	log.SetFlags(0)
 
-	cube, err := cube_executor.NewCube()
+	cube, err := cube_executor.NewCube(*configPath)
 	if err != nil {
 		log.Fatalf("can't init cube instance: %v/n", err)
 	}
