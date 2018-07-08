@@ -11,7 +11,10 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	var mapChannels map[string]string
-	cube := cube_executor.NewCube("1", mapChannels, mapChannels, mapChannels)
+	cube, err := cube_executor.NewCube()
+	if err != nil {
+		log.Fatalf("can't init cube instance: %v/n", err)
+	}
+
 	cube.Start()
 }
