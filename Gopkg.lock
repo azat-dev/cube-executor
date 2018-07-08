@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/akaumov/cube"
   packages = ["."]
-  revision = "0cdd8485664861009855d9e91470e3ef93a8e8fa"
+  revision = "767891c8ed34e866881a134c777d982685ae37e0"
 
 [[projects]]
   branch = "master"

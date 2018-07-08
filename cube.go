@@ -3,19 +3,45 @@ package cube_executor
 import (
 	handler "cube_executor/test_cube"
 	"encoding/json"
+	"fmt"
 	cube_interface "github.com/akaumov/cube"
 	"github.com/akaumov/nats-pool"
+	"github.com/nats-io/go-nats"
+	"github.com/satori/go.uuid"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
-	"github.com/nats-io/go-nats"
-	"github.com/satori/go.uuid"
-	"sync"
 )
 
 const Version = "1"
+
+type HostPort uint
+type CubePort uint
+type Protocol string
+
+type CubeChannel cube_interface.Channel
+type BusChannel cube_interface.Channel
+
+type PortMap struct {
+	CubePort CubePort `json:"cubePort"`
+	HostPort HostPort `json:"hostPort"`
+	Protocol Protocol `json:"protocol"`
+}
+
+type CubeConfig struct {
+	SchemaVersion     string                     `json:"schemaVersion"`
+	Version           string                     `json:"version"`
+	Name              string                     `json:"name"`
+	Source            string                     `json:"source"`
+	Params            map[string]string          `json:"params"`
+	PortsMapping      []PortMap                  `json:"portsMapping"`
+	ChannelsMapping   map[CubeChannel]BusChannel `json:"channelsMapping"`
+	NumberOfListeners int                        `json:"numberOfListeners"`
+}
 
 type LogMessageParams struct {
 	Time       int64  `json:"time"`
@@ -27,26 +53,50 @@ type LogMessageParams struct {
 }
 
 type Cube struct {
-	busAddress        string
-	instanceId        string
-	class             string
-	inputChannelsMap  map[string]string
-	outputChannelsMap map[string]string
-	params            map[string]string
-	paramsMutex       sync.RWMutex
-	pool              *nats_pool.Pool
-	handler           cube_interface.HandlerInterface
+	version             string
+	busAddress          string
+	instanceId          string
+	class               string
+	cubeChannelsMapping map[CubeChannel]BusChannel
+	busChannelsMapping  map[BusChannel]CubeChannel
+	inputChannels       []CubeChannel
+	params              map[string]string
+	paramsMutex         sync.RWMutex
+	pool                *nats_pool.Pool
+	handler             cube_interface.HandlerInterface
 }
 
-func NewCube(instanceId string, inputChannelsMap map[string]string, outputChannelsMap map[string]string, params map[string]string) *Cube {
-	return &Cube{
-		busAddress:        "nats://cubes-bus:4444",
-		inputChannelsMap:  inputChannelsMap,
-		outputChannelsMap: outputChannelsMap,
-		params:            params,
-		handler:           &handler.Handler{},
-		paramsMutex:       sync.RWMutex{},
+func NewCube() (*Cube, error) {
+	configRaw, err := ioutil.ReadFile("/config.json")
+	if err != nil {
+		return nil, fmt.Errorf("can't read config file: %v/n", err)
 	}
+
+	var config CubeConfig
+	err = json.Unmarshal(configRaw, &config)
+	if err != nil {
+		return nil, fmt.Errorf("can't parse config file: %v/n", err)
+	}
+
+	//TODO check channels mapping
+	busChannelsMapping := map[BusChannel]CubeChannel{}
+
+	for cubeChannel, busChannel := range config.ChannelsMapping {
+		busChannelsMapping[busChannel] = cubeChannel
+	}
+
+	return &Cube{
+		busAddress:          "nats://cubes-bus:4444",
+		class:               config.Source,
+		version:             config.Version,
+		instanceId:          config.Name,
+		cubeChannelsMapping: config.ChannelsMapping,
+		busChannelsMapping:  busChannelsMapping,
+		params:              config.Params,
+		handler:             &handler.Handler{},
+		inputChannels:       []CubeChannel{},
+		paramsMutex:         sync.RWMutex{},
+	}, nil
 }
 
 func (c *Cube) GetParam(param string) string {
@@ -63,7 +113,25 @@ func (c *Cube) GetInstanceId() string {
 	return c.instanceId
 }
 
-func (c *Cube) PublishMessage(toChannel string, message cube_interface.Message) error {
+func (c *Cube) mapToBusChannel(channel CubeChannel) BusChannel {
+	busChannel := c.cubeChannelsMapping[channel]
+	if busChannel == BusChannel("") {
+		busChannel = BusChannel(channel)
+	}
+
+	return busChannel
+}
+
+func (c *Cube) mapToCubeChannel(channel BusChannel) CubeChannel {
+	cubeChannel := c.busChannelsMapping[channel]
+	if cubeChannel == CubeChannel("") {
+		cubeChannel = CubeChannel(channel)
+	}
+
+	return cubeChannel
+}
+
+func (c *Cube) PublishMessage(cubeChannel cube_interface.Channel, message cube_interface.Message) error {
 	connection, err := c.pool.Get()
 	defer func() { c.pool.Put(connection) }()
 
@@ -76,11 +144,13 @@ func (c *Cube) PublishMessage(toChannel string, message cube_interface.Message) 
 		return nil
 	}
 
-	err = connection.Publish(toChannel, encodedMessage)
+	busChannel := c.mapToBusChannel(CubeChannel(cubeChannel))
+	err = connection.Publish(string(busChannel), encodedMessage)
 	return err
 }
 
-func (c *Cube) CallMethod(channel string, request cube_interface.Request, timeout time.Duration) (*cube_interface.Response, error) {
+func (c *Cube) CallMethod(cubeChannel cube_interface.Channel, request cube_interface.Request, timeout time.Duration) (*cube_interface.Response, error) {
+	busChannel := c.mapToBusChannel(CubeChannel(cubeChannel))
 	connection, err := c.pool.Get()
 	defer func() { c.pool.Put(connection) }()
 
@@ -93,7 +163,7 @@ func (c *Cube) CallMethod(channel string, request cube_interface.Request, timeou
 		return nil, err
 	}
 
-	packedResponse, err := connection.Request(channel, encodedMessage, timeout)
+	packedResponse, err := connection.Request(string(busChannel), encodedMessage, timeout)
 	if err == nats.ErrTimeout {
 		return nil, cube_interface.ErrorTimeout
 	}
@@ -122,14 +192,28 @@ func (c *Cube) sendLogMessage(level string, text string) error {
 		Text:       text,
 	}
 
-	message, _ := json.Marshal(logMessage)
-	err := c.PublishMessage(subject, cube_interface.Message{
+	packedLogMessage, _ := json.Marshal(logMessage)
+
+	message := cube_interface.Message{
 		Id:      &id,
 		Version: Version,
-		Params:  (*json.RawMessage)(&message),
 		Method:  level,
-	})
+		Params:  (*json.RawMessage)(&packedLogMessage),
+	}
 
+	connection, err := c.pool.Get()
+	defer func() { c.pool.Put(connection) }()
+
+	if err != nil {
+		return nil
+	}
+
+	encodedMessage, err := json.Marshal(message)
+	if err != nil {
+		return nil
+	}
+
+	err = connection.Publish(subject, encodedMessage)
 	return err
 }
 
@@ -165,7 +249,7 @@ func getOsSignalWatcher() chan os.Signal {
 	return stopChannel
 }
 
-func (c *Cube) startListenMessagesFromBus(inputChannel string, stopChannel chan os.Signal) {
+func (c *Cube) startListenMessagesFromBus(inputChannel BusChannel, stopChannel chan os.Signal) {
 
 	busClient, err := c.pool.Get()
 	defer func() { c.pool.Put(busClient) }()
@@ -175,7 +259,7 @@ func (c *Cube) startListenMessagesFromBus(inputChannel string, stopChannel chan 
 		return
 	}
 
-	_, err = busClient.Subscribe(inputChannel, func(msg *nats.Msg) {
+	_, err = busClient.Subscribe(string(inputChannel), func(msg *nats.Msg) {
 		var message cube_interface.Message
 
 		err := json.Unmarshal(msg.Data, message)
@@ -183,7 +267,8 @@ func (c *Cube) startListenMessagesFromBus(inputChannel string, stopChannel chan 
 			return
 		}
 
-		c.handler.OnReceiveMessage(c, inputChannel, message)
+		cubeChannel := c.mapToCubeChannel(inputChannel)
+		c.handler.OnReceiveMessage(c, cube_interface.Channel(cubeChannel), message)
 	})
 
 	if err != nil {
@@ -207,19 +292,21 @@ func (c *Cube) Start() {
 	c.pool = pool
 	defer func() { pool.Empty() }()
 
-	for _, instanceChannel := range c.inputChannelsMap {
-		go c.startListenMessagesFromBus(instanceChannel, getOsSignalWatcher())
+	inputChannels := c.handler.OnInitInstance()
+
+	for _, inputChannel := range inputChannels {
+		busChannel := c.mapToBusChannel(CubeChannel(inputChannel))
+		go c.startListenMessagesFromBus(busChannel, getOsSignalWatcher())
 	}
 
 	func() {
 		<-stopSignal
-		c.handler.OnStop(c)
 		c.Stop()
 	}()
 }
 
 func (c *Cube) Stop() {
-
+	c.handler.OnStop(c)
 }
 
 var _ cube_interface.Cube = (*Cube)(nil)
