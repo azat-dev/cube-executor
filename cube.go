@@ -1,10 +1,10 @@
 package cube_executor
 
 import (
-	handler "cube_executor/test_cube"
 	"encoding/json"
 	"fmt"
 	cube_interface "github.com/akaumov/cube"
+	handler "github.com/akaumov/cube-stub"
 	"github.com/akaumov/nats-pool"
 	"github.com/nats-io/go-nats"
 	"github.com/satori/go.uuid"

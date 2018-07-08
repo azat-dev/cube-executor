@@ -1,4 +1,4 @@
-package test_cube
+package cube_stub
 
 import (
 	cube_interface "github.com/akaumov/cube"

@@ -9,13 +9,23 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/akaumov/cube-stub"
+  packages = ["."]
+  revision = "01d2e4a294183aad116287382fba04335edd606b"
+
+[[projects]]
+  branch = "master"
   name = "github.com/akaumov/nats-pool"
   packages = ["."]
   revision = "c7bed8c335be3988fe7978c69e6985b8bc5effac"
 
 [[projects]]
   name = "github.com/nats-io/go-nats"
-  packages = [".","encoders/builtin","util"]
+  packages = [
+    ".",
+    "encoders/builtin",
+    "util"
+  ]
   revision = "062418ea1c2181f52dc0f954f6204370519a868b"
   version = "v1.5.0"
 
@@ -34,6 +44,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "48a92700537ab0485277918bd27b0611868587d578da9bb0ae1e0a06262b2a0c"
+  inputs-digest = "3f1fcd105e54bd5fac52e1bdb8d48743adaf6ace4f46759e2288766e13a97e35"
   solver-name = "gps-cdcl"
   solver-version = 1
