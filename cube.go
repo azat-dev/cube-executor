@@ -36,8 +36,10 @@ type CubeConfig struct {
 	SchemaVersion     string                     `json:"schemaVersion"`
 	Version           string                     `json:"version"`
 	Name              string                     `json:"name"`
+	Class             string                     `json:"class"`
 	Source            string                     `json:"source"`
 	Params            map[string]string          `json:"params"`
+	QueueGroup        string                     `json:"queueGroup"`
 	PortsMapping      []PortMap                  `json:"portsMapping"`
 	ChannelsMapping   map[CubeChannel]BusChannel `json:"channelsMapping"`
 	NumberOfListeners int                        `json:"numberOfListeners"`
@@ -57,6 +59,8 @@ type Cube struct {
 	busAddress          string
 	instanceId          string
 	class               string
+	source              string
+	queueGroup          string
 	cubeChannelsMapping map[CubeChannel]BusChannel
 	busChannelsMapping  map[BusChannel]CubeChannel
 	inputChannels       []CubeChannel
@@ -87,9 +91,11 @@ func NewCube(configPath string) (*Cube, error) {
 
 	return &Cube{
 		busAddress:          "nats://cubes-bus:4444",
-		class:               config.Source,
+		class:               config.Class,
+		source:              config.Source,
 		version:             config.Version,
 		instanceId:          config.Name,
+		queueGroup:          config.QueueGroup,
 		cubeChannelsMapping: config.ChannelsMapping,
 		busChannelsMapping:  busChannelsMapping,
 		params:              config.Params,
@@ -163,6 +169,8 @@ func (c *Cube) CallMethod(cubeChannel cube_interface.Channel, request cube_inter
 		return nil, err
 	}
 
+	fmt.Printf("Call method on channel %v/n", busChannel)
+
 	packedResponse, err := connection.Request(string(busChannel), encodedMessage, timeout)
 	if err == nats.ErrTimeout {
 		return nil, cube_interface.ErrorTimeout
@@ -181,7 +189,7 @@ func (c *Cube) CallMethod(cubeChannel cube_interface.Channel, request cube_inter
 func (c *Cube) sendLogMessage(level string, text string) error {
 
 	id := uuid.NewV4().String()
-	subject := "log." + c.class + "." + c.instanceId
+	subject := "log." + level + "." + c.class  + "." + c.instanceId
 
 	logMessage := LogMessageParams{
 		Id:         id,
@@ -259,17 +267,13 @@ func (c *Cube) startListenMessagesFromBus(inputChannel BusChannel, stopChannel c
 		return
 	}
 
-	_, err = busClient.Subscribe(string(inputChannel), func(msg *nats.Msg) {
-		var message cube_interface.Message
+	var subscription *nats.Subscription
 
-		err := json.Unmarshal(msg.Data, message)
-		if err == nil {
-			return
-		}
-
-		cubeChannel := c.mapToCubeChannel(inputChannel)
-		c.handler.OnReceiveMessage(c, cube_interface.Channel(cubeChannel), message)
-	})
+	if c.queueGroup != "" {
+		subscription, err = busClient.QueueSubscribe(string(inputChannel), c.queueGroup, c.handleNatsMessage)
+	} else {
+		subscription, err = busClient.Subscribe(string(inputChannel), c.handleNatsMessage)
+	}
 
 	if err != nil {
 		log.Fatalf("Can't connect to nats: %v", err)
@@ -277,6 +281,19 @@ func (c *Cube) startListenMessagesFromBus(inputChannel BusChannel, stopChannel c
 	}
 
 	<-stopChannel
+	subscription.Unsubscribe()
+}
+
+func (c *Cube) handleNatsMessage(msg *nats.Msg) {
+	var message cube_interface.Message
+
+	err := json.Unmarshal(msg.Data, message)
+	if err == nil {
+		return
+	}
+
+	cubeChannel := c.mapToCubeChannel(BusChannel(msg.Subject))
+	c.handler.OnReceiveMessage(c, cube_interface.Channel(cubeChannel), message)
 }
 
 func (c *Cube) Start() {
@@ -287,7 +304,7 @@ func (c *Cube) Start() {
 
 	pool, err := nats_pool.New(c.busAddress, 10)
 	if err != nil {
-		fmt.Println("can't connect to nats: %v", err)
+		fmt.Printf("can't connect to nats: %v", err)
 		return
 	}
 
