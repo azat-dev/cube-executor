@@ -29,12 +29,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/akaumov/cube_executor"
-  packages = ["."]
-  revision = "9073457f503d297753e2b3ee9c679e40dc1f088a"
-
-[[projects]]
-  branch = "master"
   name = "github.com/akaumov/nats-pool"
   packages = ["."]
   revision = "c7bed8c335be3988fe7978c69e6985b8bc5effac"
@@ -64,6 +58,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7ab73b870bb42b641093ff94d9f62192c4f7719409603134bf911043fc60e95f"
+  inputs-digest = "cec5c5af4cdc47fb5b52eae8fbbf04293289bbab6494c0aafd2bb00508588e90"
   solver-name = "gps-cdcl"
   solver-version = 1
