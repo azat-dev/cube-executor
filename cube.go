@@ -189,7 +189,12 @@ func (c *Cube) CallMethod(cubeChannel cube_interface.Channel, request cube_inter
 func (c *Cube) sendLogMessage(level string, text string) error {
 
 	id := uuid.NewV4().String()
-	subject := "log." + level + "." + c.class  + "." + c.instanceId
+	className := c.class
+	if className == ""{
+		className = "default"
+	}
+
+	subject := "log." + level + "." + c.class + "." + c.instanceId
 
 	logMessage := LogMessageParams{
 		Id:         id,
