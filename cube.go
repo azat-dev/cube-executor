@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	cube_interface "github.com/akaumov/cube"
-	handler "github.com/akaumov/cube-http-gateway"
 	"github.com/akaumov/nats-pool"
 	"github.com/nats-io/go-nats"
 	"github.com/satori/go.uuid"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -35,6 +33,8 @@ type PortMap struct {
 type CubeConfig struct {
 	SchemaVersion     string                     `json:"schemaVersion"`
 	Version           string                     `json:"version"`
+	BusHost           string                     `json:"busHost"`
+	BusPort           int                        `json:"busPort"`
 	Name              string                     `json:"name"`
 	Class             string                     `json:"class"`
 	Source            string                     `json:"source"`
@@ -70,17 +70,7 @@ type Cube struct {
 	handler             cube_interface.HandlerInterface
 }
 
-func NewCube(configPath string) (*Cube, error) {
-	configRaw, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("can't read config file: %v/n", err)
-	}
-
-	var config CubeConfig
-	err = json.Unmarshal(configRaw, &config)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse config file: %v/n", err)
-	}
+func NewCube(config CubeConfig, handler cube_interface.HandlerInterface) (*Cube, error) {
 
 	//TODO check channels mapping
 	busChannelsMapping := map[BusChannel]CubeChannel{}
@@ -89,8 +79,19 @@ func NewCube(configPath string) (*Cube, error) {
 		busChannelsMapping[busChannel] = cubeChannel
 	}
 
+	busHost := config.BusHost
+	if busHost == "" {
+		busHost = "cubes-bus"
+	}
+
+	busPort := config.BusPort
+	if busPort == 0 {
+		busPort = 4444
+	}
+
+	busAddress := fmt.Sprintf("nats://%v:%v", busHost, busPort)
 	return &Cube{
-		busAddress:          "nats://cubes-bus:4444",
+		busAddress:          busAddress,
 		class:               config.Class,
 		source:              config.Source,
 		version:             config.Version,
@@ -99,7 +100,7 @@ func NewCube(configPath string) (*Cube, error) {
 		cubeChannelsMapping: config.ChannelsMapping,
 		busChannelsMapping:  busChannelsMapping,
 		params:              config.Params,
-		handler:             &handler.Handler{},
+		handler:             handler,
 		inputChannels:       []CubeChannel{},
 		paramsMutex:         sync.RWMutex{},
 	}, nil
@@ -190,7 +191,7 @@ func (c *Cube) sendLogMessage(level string, text string) error {
 
 	id := uuid.NewV4().String()
 	className := c.class
-	if className == ""{
+	if className == "" {
 		className = "default"
 	}
 

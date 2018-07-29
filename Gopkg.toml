@@ -31,10 +31,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/akaumov/cube-http-gateway"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/akaumov/nats-pool"
 
 [[constraint]]

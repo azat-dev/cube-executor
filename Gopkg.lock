@@ -2,30 +2,10 @@
 
 
 [[projects]]
-  name = "github.com/SermoDigital/jose"
-  packages = [
-    ".",
-    "crypto",
-    "jws",
-    "jwt"
-  ]
-  revision = "f6df55f235c24f236d11dbcf665249a59ac2021f"
-  version = "1.1"
-
-[[projects]]
   branch = "master"
   name = "github.com/akaumov/cube"
   packages = ["."]
   revision = "767891c8ed34e866881a134c777d982685ae37e0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/akaumov/cube-http-gateway"
-  packages = [
-    ".",
-    "js"
-  ]
-  revision = "32189bd2a251fa8589a530395ab14dc0f47f69f8"
 
 [[projects]]
   branch = "master"
@@ -58,6 +38,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fc5c0f9db7becacb24fe858a1be364e052eff115a7b3a3aca1f6d4239dbe10f2"
+  inputs-digest = "8a55ad7e91f87a79e31dc933121ed31ccdda1dbb44f1447c2f8833c36f4ca89e"
   solver-name = "gps-cdcl"
   solver-version = 1
