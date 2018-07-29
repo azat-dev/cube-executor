@@ -323,7 +323,11 @@ func (c *Cube) Start() error {
 		go c.startListenMessagesFromBus(busChannel, getOsSignalWatcher())
 	}
 
-	c.handler.OnStart(c)
+	err = c.handler.OnStart(c)
+	if err != nil {
+		return fmt.Errorf("can't start instance: %v", err)
+	}
+
 	fmt.Println("Instance is started")
 	<-stopSignal
 	c.Stop()
