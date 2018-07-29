@@ -302,7 +302,7 @@ func (c *Cube) handleNatsMessage(msg *nats.Msg) {
 	c.handler.OnReceiveMessage(c, cube_interface.Channel(cubeChannel), message)
 }
 
-func (c *Cube) Start() {
+func (c *Cube) Start() error {
 
 	fmt.Println("Start")
 	//TODO: check stopping
@@ -310,8 +310,7 @@ func (c *Cube) Start() {
 
 	pool, err := nats_pool.New(c.busAddress, 10)
 	if err != nil {
-		fmt.Printf("can't connect to nats: %v", err)
-		return
+		return  fmt.Errorf("can't connect to nats: %v", err)
 	}
 
 	c.pool = pool
@@ -325,9 +324,12 @@ func (c *Cube) Start() {
 	}
 
 	c.handler.OnStart(c)
-	fmt.Println("Instance started")
+	fmt.Println("Instance is started")
 	<-stopSignal
 	c.Stop()
+	fmt.Println("Instance is stopped")
+
+	return nil
 }
 
 func (c *Cube) Stop() {
